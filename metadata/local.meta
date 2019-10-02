@@ -1,0 +1,18 @@
+[app/ui]
+version = 7.3.0
+modtime = 1569461319.677001000
+
+[app/launcher]
+version = 7.3.0
+modtime = 1569461319.678935000
+
+[nav/default]
+version = 7.3.0
+modtime = 1569462482.102137000
+
+[views/is_demo]
+access = read : [ * ], write : [ * ]
+export = none
+owner = kumaaran
+version = 7.3.0
+modtime = 1570021914.933731000
