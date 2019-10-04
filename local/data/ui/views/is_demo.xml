@@ -28,7 +28,7 @@
       <!--    <eval token="form.serviceProvider">if(mvcount('form.serviceProvider')=0,"*",if(mvcount('form.serviceProvider')!=1,mvfilter('form.serviceProvider'!="*"),'form.serviceProvider'))</eval>-->
       <!--</change>-->
       <search base="base_search">
-        <query> search $tenant$ AND usr="$usr$" |stats count by serviceProvider</query>
+        <query> search $tenant$ AND $usr$ |stats count by serviceProvider</query>
       </search>
       <initialValue>*</initialValue>
       <valuePrefix>serviceProvider="</valuePrefix>
@@ -42,14 +42,14 @@
       <fieldForLabel>tenant</fieldForLabel>
       <fieldForValue>tenant</fieldForValue>
       <search base="base_search">
-        <query> | search $serviceProvider$ AND usr="$usr$" |stats count by tenant</query>
+        <query> | search $serviceProvider$ AND $usr$ |stats count by tenant</query>
       </search>
       <initialValue>*</initialValue>
       <valuePrefix>tenant="</valuePrefix>
       <valueSuffix>"</valueSuffix>
       <delimiter> OR </delimiter>
     </input>
-    <input type="dropdown" token="usr">
+      <input id="multi3" type="multiselect" token="usr">
       <label>User</label>
       <choice value="*">All</choice>
       <default>*</default>
@@ -58,14 +58,29 @@
       <search base="base_search">
         <query> | search $tenant$ AND $serviceProvider$|stats count by usr</query>
       </search>
+      <initialValue>*</initialValue>
+      <valuePrefix>usr="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
     </input>
+    <!--<input type="dropdown" token="usr">-->
+    <!--  <label>User</label>-->
+    <!--  <choice value="*">All</choice>-->
+    <!--  <default>*</default>-->
+    <!--  <fieldForLabel>usr</fieldForLabel>-->
+    <!--  <fieldForValue>usr</fieldForValue>-->
+    <!--  <search base="base_search">-->
+    <!--    <query> | search $tenant$ AND $serviceProvider$|stats count by usr</query>-->
+    <!--  </search>-->
+    <!--   <initialValue>*</initialValue>-->
+    <!--</input>-->
   </fieldset>
   <row>
     <panel>
       <single>
         <title>Total Attempts</title>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND usr="$usr$" | where NOT (type =="step" and step =="true")  |stats count</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ | where NOT (type =="step" and step =="true")  |stats count</query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
@@ -78,7 +93,7 @@
       <single>
         <title>Total Failed Attempts</title>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND usr="$usr$"|where (step =="false" AND logged=="false") |stats count</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$|where (step =="false" AND logged=="false") |stats count</query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
@@ -93,7 +108,7 @@
       <chart>
         <title>Attempt based on Users</title>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND usr="$usr$"| eval loginTime=strftime( time/1000,"%I:%M %p %d %B %Y") |chart count(eval((logged="true") AND (type="overall"))) AS Success,  count(eval(step="false")) AS failed by usr</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$| eval loginTime=strftime( time/1000,"%I:%M %p %d %B %Y") |chart count(eval((logged="true") AND (type="overall"))) AS Success,  count(eval(step="false")) AS failed by usr</query>
         </search>
         <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
         <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
@@ -131,32 +146,11 @@
       </chart>
     </panel>
     <panel>
-      <html depends="$alwaysHideCSSStyle$">
-         <style>
-           g.c3-shapes.c3-shapes-WARN path.c3-shape.c3-arc-WARN{
-               fill:green !important;
-           }
-           g.c3-shapes.c3-shapes-ERROR path.c3-shape.c3-arc-ERROR{
-               fill:red !important;
-           }
-           div.c3-tooltip-container table.c3-tooltip tr.c3-tooltip-name--WARN td.name span{
-               background-color:amber !important;
-           }
-           div.c3-tooltip-container table.c3-tooltip tr.c3-tooltip-name--ERROR td.name span{
-               background-color:red !important;
-           }
-           g.c3-legend-item-WARN line.c3-legend-item-tile{
-               stroke:amber !important;
-           }
-           g.c3-legend-item-ERROR line.c3-legend-item-tile{
-               stroke:red !important;
-           }
-         </style>
-       </html>
+     
       <viz type="semicircle_donut.semicircle_donut">
         <title>User percentage by logging success</title>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND usr="$usr$"  | where NOT (type =="step" and step =="true") |replace "true" WITH "success", "false" WITH "failed" IN logged|stats count(usr) as attempts by logged</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$  | where NOT (type =="step" and step =="true") |replace "true" WITH "success", "false" WITH "failed" IN logged|stats count(usr) as attempts by logged</query>
         </search>
         <option name="refresh.display">progressbar</option>
         <option name="semicircle_donut.semicircle_donut.cutoutPercentage">50</option>
@@ -186,7 +180,7 @@
       <table>
         <title>Details</title>
         <search base="base_search">
-          <query> search $serviceProvider$ AND usr="$usr$" AND $tenant$ | eval loginTime=strftime( timestamp/1000,"%I:%M %p %d %b %Y") | where NOT (type =="step" and step =="true") |rename step as attempt |table loginTime attempt usr</query>
+          <query> search $serviceProvider$ AND $usr$ AND $tenant$ | eval loginTime=strftime( timestamp/1000,"%I:%M %p %d %b %Y") | where NOT (type =="step" and step =="true") |rename step as attempt |table loginTime attempt usr</query>
         </search>
         <option name="count">10</option>
         <option name="dataOverlayMode">none</option>
@@ -206,12 +200,13 @@
   <row>
     <panel>
       <chart>
-        <search>
-          <query>source="is_test" 
-| timechart span=1d dc(payloadData.username) dc(payloadData.serviceProvider) dc(payloadData.tenantDomain)</query>
+        <title>Login patterns over time</title>
+        <search base="base_search">
+          <query>search $serviceProvider$ AND $usr$ AND $tenant$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=1d count(usr) by logged | rename _time as Time | eval Time=strftime(Time, "%d-%b-%Y") | fields - NULL</query>
         </search>
         <option name="charting.chart">line</option>
         <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
       </chart>
     </panel>
   </row>
