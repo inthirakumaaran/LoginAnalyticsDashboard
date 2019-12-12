@@ -8,11 +8,24 @@ modtime = 1569461319.678935000
 
 [nav/default]
 version = 7.3.0
-modtime = 1569462482.102137000
+modtime = 1574997155.766171000
 
 [views/is_demo]
 access = read : [ * ], write : [ * ]
 export = none
 owner = kumaaran
 version = 7.3.0
-modtime = 1570109803.086689000
+modtime = 1574129327.298468000
+
+[views/is_session_demo]
+export = none
+owner = admin
+version = 7.3.0
+modtime = 1575909626.973610000
+
+[savedsearches/session]
+access = read : [ * ], write : [ admin, power ]
+export = system
+owner = admin
+version = 7.3.0
+modtime = 1575517210.260065000

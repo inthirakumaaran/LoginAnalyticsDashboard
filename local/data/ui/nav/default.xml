@@ -1,5 +1,6 @@
 <nav search_view="search">
   <view name="is_demo" default='true' />
+  <view name="is_session_demo"/>
   <view name="search" />
   <view name="dashboards" /> 
 </nav>

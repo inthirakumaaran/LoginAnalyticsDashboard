@@ -1,0 +1,295 @@
+<form refresh="45">
+  <label>IS Session Demo</label>
+  <description>This is for session demo purposes</description>
+  <!--<search id="base_search">-->
+  <!--  <query>-->
+  <!--      source="is_session" | rename payloadData.action as action payloadData.sessionId as SessionId  payloadData.startTimestamp as startTime payloadData.terminationTimestamp as terminatedTime payloadData._timestamp as currentTime payloadData.username as User  payloadData.tenantDomain as tenant payloadData.userStoreDomain as userstore payloadData.remoteIp as IpAddress payloadData.serviceProvider as serviceProvider| fields *-->
+  <!--  </query>-->
+  <!--  <earliest>$timepicker.earliest$</earliest>-->
+  <!--  <latest>$timepicker.latest$</latest>-->
+  <!--  <done>-->
+  <!--     <condition>-->
+  <!--       <set token="base_search">$job.sid$</set>-->
+  <!--     </condition>-->
+  <!--   </done>-->
+  <!--</search>-->
+  <search id="base_search">
+    <query>
+        | savedsearch session
+    </query>
+    <earliest>$timepicker.earliest$</earliest>
+    <latest>$timepicker.latest$</latest>
+    <done>
+      <condition>
+        <set token="base_search">$job.sid$</set>
+      </condition>
+    </done>
+  </search>
+  <search id="notsearch_sid" base="base_search">
+    <query> 
+  | where (action == "0")| return 100000 SessionId| rex mode=sed field=search "s/OR/NOT/g"] 
+</query>
+    <done>
+      <condition>
+        <set token="notsearch_sid">$job.sid$</set>
+      </condition>
+    </done>
+  </search>
+  <search id="subsearch_results" base="base_search">
+    <query> 
+  | where (action == "1") 
+  | search NOT [| loadjob $base_search$  |  where (action == "0")| return 100000 SessionId| rex mode=sed field=search "s/OR/NOT/g"] 
+  | search $serviceProvider$ AND $User$ AND $tenant$ | fields * </query>
+    <done>
+      <condition>
+        <set token="subsearch_sid">$job.sid$</set>
+      </condition>
+    </done>
+  </search>
+  <!--  <row>-->
+  <!--    <panel>-->
+  <!--      <chart>-->
+  <!--        <title>Session Count over Time</title>-->
+  <!--        <search base="base_search">-->
+  <!--          <query>-->
+  <!--| replace "1" WITH "Active", "0" WITH "Terminated" IN action-->
+  <!--| where (action == "Active")  -->
+  <!--|  search NOT [search source="is_session" | rename payloadData.action as action  payloadData.sessionId as SessionId |  where (action == "0")| return 100000 SessionId| rex mode=sed field=search "s/OR/NOT/g"] -->
+  <!--| eval attempt = if(terminatedTime/1000 &gt; now() , "active","inactive")-->
+  <!--| append [search source="is_session" | rename payloadData.action as action payloadData.sessionId as SessionId  payloadData.startTimestamp as startTime payloadData.terminationTimestamp as terminatedTime payloadData._timestamp as currentTime payloadData.username as User  payloadData.tenantDomain as tenant payloadData.userStoreDomain as userstore payloadData.remoteIp as IpAddress payloadData.serviceProvider as serviceProvider-->
+  <!--    | replace "1" WITH "Active", "0" WITH "Terminated" IN action | where (action == "Terminated") -->
+  <!--    | eval attempt = if(action == "Terminated" , "inactive","active")]-->
+  <!--| search $serviceProvider$ AND $User$ AND $tenant$ -->
+  <!--|  timechart span=1d count(User) by attempt</query>-->
+  <!--        </search>-->
+  <!--        <option name="charting.axisTitleX.text">Time</option>-->
+  <!--        <option name="charting.axisTitleY.text">Count</option>-->
+  <!--        <option name="charting.chart">column</option>-->
+  <!--        <option name="charting.drilldown">none</option>-->
+  <!--      </chart>-->
+  <!--    </panel>-->
+  <!--  </row>-->
+  <!--  <row>-->
+  <!--    <panel>-->
+  <!--      <table>-->
+  <!--        <title>Termiated Session Details</title>-->
+  <!--        <search base="base_search">-->
+  <!--          <query> search $serviceProvider$ AND $User$ AND $tenant$ -->
+  <!--|  where (action == "0")| eval Duration(Sec) = round((currentTime - startTime) /1000)-->
+  <!--| eval StartTime = strftime(startTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--| eval EndTime = strftime(currentTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--| eval TerminationTime = strftime(terminatedTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--|  table User StartTime TerminationTime EndTime Duration(Sec) SessionId -->
+  <!--| append [search source="is_session" |rename payloadData.action as action payloadData.sessionId as SessionId  payloadData.startTimestamp as startTime payloadData.terminationTimestamp as terminatedTime payloadData._timestamp as currentTime payloadData.username as User  payloadData.tenantDomain as tenant payloadData.userStoreDomain as userstore payloadData.remoteIp as IpAddress payloadData.serviceProvider as serviceProvider-->
+  <!--  | Where (action == "1") -->
+  <!--  | search $serviceProvider$ AND $User$ AND $tenant$ -->
+  <!--  | search NOT [search source="is_session" | rename payloadData.action as action  payloadData.sessionId as SessionId |  where (action == "0")| return 100000 SessionId| rex mode=sed field=search "s/OR/NOT/g"] -->
+  <!--  | eval autoEndtime= round((terminatedTime-startTime)/1000)-->
+  <!--  | eval currentDuration = round(now()-startTime/1000)-->
+  <!--  | eval Duration(Sec) = if(terminatedTime/1000 &gt; now(),currentDuration, autoEndtime)-->
+  <!--  | eval currentTime=now()-->
+  <!--  | eval StartTime = strftime(startTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--  | eval TerminationTime = strftime(terminatedTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--  | eval EndTime = if(terminatedTime/1000 &gt; now(),"Live", TerminationTime)-->
+  <!--  | table User StartTime TerminationTime EndTime Duration(Sec) SessionId]</query>-->
+  <!--        </search>-->
+  <!--        <option name="count">10</option>-->
+  <!--        <option name="dataOverlayMode">none</option>-->
+  <!--        <option name="drilldown">cell</option>-->
+  <!--        <option name="percentagesRow">false</option>-->
+  <!--        <option name="refresh.display">progressbar</option>-->
+  <!--        <option name="rowNumbers">false</option>-->
+  <!--        <option name="totalsRow">false</option>-->
+  <!--        <option name="wrap">true</option>-->
+  <!--        <format type="color" field="attempt">-->
+  <!--          <colorPalette type="minMidMax" maxColor="#006D9C" minColor="#FFFFFF"></colorPalette>-->
+  <!--          <scale type="minMidMax"></scale>-->
+  <!--        </format>-->
+  <!--      </table>-->
+  <!--    </panel>-->
+  <!--  </row>-->
+  <!--  <row>-->
+  <!--    <panel>-->
+  <!--      <table>-->
+  <!--        <title>Termiated Session Details new</title>-->
+  <!--        <search base="base_search">-->
+  <!--          <query> search $serviceProvider$ AND $User$ AND $tenant$ -->
+  <!--|  where (action == "0")| eval Duration(Sec) = round((currentTime - startTime) /1000)-->
+  <!--| eval StartTime = strftime(startTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--| eval EndTime = strftime(currentTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--| eval TerminationTime = strftime(terminatedTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--|  table User StartTime TerminationTime EndTime Duration(Sec) SessionId -->
+  <!--| append [| loadjob $subsearch_sid$ -->
+  <!-- | eval autoEndtime= round((terminatedTime-startTime)/1000)-->
+  <!--  | eval currentDuration = round(now()-startTime/1000)-->
+  <!--  | eval Duration(Sec) = if(terminatedTime/1000 &gt; now(),currentDuration, autoEndtime)-->
+  <!--  | eval currentTime=now()-->
+  <!--  | eval StartTime = strftime(startTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--  | eval TerminationTime = strftime(terminatedTime/1000, "%Y-%m-%d %H:%M:%S") -->
+  <!--  | eval EndTime = if(terminatedTime/1000 &gt; now(),"Live", TerminationTime)-->
+  <!--  | table User StartTime TerminationTime EndTime Duration(Sec) SessionId]-->
+  <!-- </query>-->
+  <!--        </search>-->
+  <!--        <option name="count">10</option>-->
+  <!--        <option name="dataOverlayMode">none</option>-->
+  <!--        <option name="drilldown">cell</option>-->
+  <!--        <option name="percentagesRow">false</option>-->
+  <!--        <option name="refresh.display">progressbar</option>-->
+  <!--        <option name="rowNumbers">false</option>-->
+  <!--        <option name="totalsRow">false</option>-->
+  <!--        <option name="wrap">true</option>-->
+  <!--        <format type="color" field="attempt">-->
+  <!--          <colorPalette type="minMidMax" maxColor="#006D9C" minColor="#FFFFFF"></colorPalette>-->
+  <!--          <scale type="minMidMax"></scale>-->
+  <!--        </format>-->
+  <!--      </table>-->
+  <!--    </panel>-->
+  <!--  </row>-->
+  <fieldset submitButton="false" autoRun="false">
+    <input type="time" token="timepicker">
+      <label>Time Picker</label>
+      <default>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input id="multi1" type="multiselect" token="serviceProvider">
+      <label>ServiceProvider</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>serviceProvider</fieldForLabel>
+      <fieldForValue>serviceProvider</fieldForValue>
+      <search base="base_search">
+        <query> search $tenant$ AND $User$ |stats count by serviceProvider</query>
+      </search>
+      <initialValue>*</initialValue>
+      <valuePrefix>serviceProvider="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+    </input>
+    <input id="multi2" type="multiselect" token="tenant">
+      <label>Tenant</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>tenant</fieldForLabel>
+      <fieldForValue>tenant</fieldForValue>
+      <search base="base_search">
+        <query> | search $serviceProvider$ AND $User$ |stats count by tenant</query>
+      </search>
+      <initialValue>*</initialValue>
+      <valuePrefix>tenant="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+    </input>
+    <input id="multi3" type="multiselect" token="User">
+      <label>User</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>User</fieldForLabel>
+      <fieldForValue>User</fieldForValue>
+      <search base="base_search">
+        <query> | search $tenant$ AND $serviceProvider$|stats count by User</query>
+      </search>
+      <initialValue>*</initialValue>
+      <valuePrefix>User="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>OverAll</title>
+      <single>
+        <title>Total Session Count</title>
+        <search base="base_search">
+          <query> search $serviceProvider$ AND $User$ AND $tenant$ 
+|stats distinct_count(SessionId)</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Total Session</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <single>
+        <search base="base_search">
+          <query> search $serviceProvider$ AND $User$ AND $tenant$ 
+| where (action == "1" and terminatedTime/1000 &gt; now())  | search NOT [| savedsearch session |  where (action == "0")| return 10000 SessionId| rex mode=sed field=search "s/OR/NOT/g"] | stats distinct_count(SessionId) </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Total Live Session</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Session Count over Time new</title>
+        <search base="base_search">
+          <query>
+| replace "1" WITH "Active", "0" WITH "Terminated" IN action
+| where (action == "Active")  
+|  search NOT [| savedsearch session|  where (action == "0")| return 100000 SessionId| rex mode=sed field=search "s/OR/NOT/g"] 
+| eval attempt = if(terminatedTime/1000 &gt; now() , "active","inactive")
+| append [| savedsearch session
+    | replace "1" WITH "Active", "0" WITH "Terminated" IN action | where (action == "Terminated") 
+    | eval attempt = if(action == "Terminated" , "inactive","active")]
+| search $serviceProvider$ AND $User$ AND $tenant$ 
+|  timechart span=1d count(User) by attempt</query>
+        </search>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Count</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Termiated Session Details new</title>
+        <search base="base_search">
+          <query> search $serviceProvider$ AND $User$ AND $tenant$ 
+|  where (action == "0")| eval Duration(Sec) = round((currentTime - startTime) /1000)
+| eval StartTime = strftime(startTime/1000, "%Y-%m-%d %H:%M:%S") 
+| eval EndTime = strftime(currentTime/1000, "%Y-%m-%d %H:%M:%S") 
+| eval TerminationTime = strftime(terminatedTime/1000, "%Y-%m-%d %H:%M:%S") 
+|  table User StartTime TerminationTime EndTime Duration(Sec) SessionId 
+| append [| savedsearch session
+  | Where (action == "1") 
+  | search $serviceProvider$ AND $User$ AND $tenant$ 
+  | search NOT [| savedsearch session|  where (action == "0")| return 100000 SessionId| rex mode=sed field=search "s/OR/NOT/g"] 
+  | eval autoEndtime= round((terminatedTime-startTime)/1000)
+  | eval currentDuration = round(now()-startTime/1000)
+  | eval Duration(Sec) = if(terminatedTime/1000 &gt; now(),currentDuration, autoEndtime)
+  | eval currentTime=now()
+  | eval StartTime = strftime(startTime/1000, "%Y-%m-%d %H:%M:%S") 
+  | eval TerminationTime = strftime(terminatedTime/1000, "%Y-%m-%d %H:%M:%S") 
+  | eval EndTime = if(terminatedTime/1000 &gt; now(),"Live", TerminationTime)
+  | table User StartTime TerminationTime EndTime Duration(Sec) SessionId]</query>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="attempt">
+          <colorPalette type="minMidMax" maxColor="#006D9C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>
