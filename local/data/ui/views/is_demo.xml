@@ -83,6 +83,20 @@
     <panel>
       <single>
         <search base="base_search">
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ | where NOT (type =="step" and step =="true")  |stats distinct_count(usr)</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x0E31EB","0x6db7c6","0xf7bc38","0xf58f39","0xd93f3c"]</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Total Users</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <search base="base_search">
           <query> search $tenant$ AND $serviceProvider$ AND $usr$|where (step =="false" AND logged=="false") |stats count</query>
         </search>
         <option name="drilldown">none</option>
@@ -158,6 +172,7 @@
         <search base="base_search">
           <query> search $tenant$ AND $serviceProvider$ AND $usr$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|stats count(usr) as amount by serviceProvider | fields - NULL | sort -amount | head 5</query>
         </search>
+        <option name="charting.axisTitleY.text">Attempt</option>
         <option name="charting.chart">column</option>
         <option name="charting.drilldown">none</option>
       </chart>

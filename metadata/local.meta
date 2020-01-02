@@ -15,13 +15,13 @@ access = read : [ * ], write : [ * ]
 export = none
 owner = kumaaran
 version = 7.3.0
-modtime = 1574129327.298468000
+modtime = 1576652136.528902000
 
 [views/is_session_demo]
 export = none
 owner = admin
 version = 7.3.0
-modtime = 1575909626.973610000
+modtime = 1576470892.314917000
 
 [savedsearches/session]
 access = read : [ * ], write : [ admin, power ]
@@ -29,3 +29,9 @@ export = system
 owner = admin
 version = 7.3.0
 modtime = 1575517210.260065000
+
+[savedsearches/sessionNew]
+export = none
+owner = admin
+version = 7.3.0
+modtime = 1576159886.023977000
