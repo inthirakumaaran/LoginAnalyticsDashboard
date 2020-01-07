@@ -240,7 +240,7 @@
     <input type="time" token="timepicker">
       <label>Time Picker</label>
       <default>
-        <earliest>-60m@m</earliest>
+        <earliest>-24h@h</earliest>
         <latest>now</latest>
       </default>
     </input>

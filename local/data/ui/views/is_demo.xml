@@ -12,7 +12,7 @@
     <input type="time" token="timepicker">
       <label>Time Picker</label>
       <default>
-        <earliest>-24h</earliest>
+        <earliest>-24h@h</earliest>
         <latest>now</latest>
       </default>
     </input>
