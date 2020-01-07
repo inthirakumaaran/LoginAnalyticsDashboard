@@ -12,7 +12,7 @@
     <input type="time" token="timepicker">
       <label>Time Picker</label>
       <default>
-        <earliest>-60m@m</earliest>
+        <earliest>-24h</earliest>
         <latest>now</latest>
       </default>
     </input>
@@ -180,10 +180,18 @@
   </row>
   <row>
     <panel>
+       <title>Login patterns over time</title>
+      <input type="dropdown" token="overtime" searchWhenChanged="true">
+        <label>Select the Duration</label>
+        <choice value="1h">Hours</choice>
+        <choice value="1d">Days</choice>
+        <choice value="1w">Weeks</choice>
+        <choice value="1months">Months</choice>
+        <default>Weeks</default>
+      </input>
       <chart>
-        <title>Login patterns over time</title>
         <search base="base_search">
-          <query>search $serviceProvider$ AND $usr$ AND $tenant$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=1d count(usr) by logged | rename _time as Time | eval Time=strftime(Time, "%d-%b-%Y") | fields - NULL</query>
+          <query>search $serviceProvider$ AND $usr$ AND $tenant$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=$overtime$ count(usr) by logged | rename _time as Time | eval Time=strftime(Time, "%d-%b-%Y") | fields - NULL</query>
         </search>
         <option name="charting.axisTitleX.visibility">visible</option>
         <option name="charting.axisTitleY.visibility">visible</option>

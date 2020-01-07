@@ -15,7 +15,7 @@ access = read : [ * ], write : [ * ]
 export = none
 owner = kumaaran
 version = 7.3.0
-modtime = 1576652136.528902000
+modtime = 1578413289.588664000
 
 [views/is_session_demo]
 export = none
@@ -31,7 +31,8 @@ version = 7.3.0
 modtime = 1575517210.260065000
 
 [savedsearches/sessionNew]
+access = read : [ * ], write : [ admin, power ]
 export = none
 owner = admin
 version = 7.3.0
-modtime = 1576159886.023977000
+modtime = 1578413378.378443000
