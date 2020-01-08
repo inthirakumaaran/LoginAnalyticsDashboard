@@ -3,7 +3,7 @@
   <description>This is for demo purposes</description>
   <search id="base_search">
     <query>
-        source="is_test" | rename payloadData._timestamp as timestamp payloadData.serviceProvider as serviceProvider payloadData.authenticationSuccess as logged payloadData.username as usr payloadData.eventType as type payloadData.authStepSuccess as step payloadData.tenantDomain as tenant payloadData.userStoreDomain as userstore payloadData.remoteIp as IpAddress| fields *
+        source="is_test" | rename payloadData._timestamp as timestamp payloadData.serviceProvider as serviceProvider payloadData.authenticationSuccess as logged payloadData.username as usr payloadData.eventType as type payloadData.authStepSuccess as step payloadData.tenantDomain as tenant payloadData.userStoreDomain as userstore payloadData.remoteIp as IpAddress payloadData.rolesCommaSeparated as role| fields *
     </query>
     <earliest>$timepicker.earliest$</earliest>
     <latest>$timepicker.latest$</latest>
@@ -28,7 +28,7 @@
       <!--    <eval token="form.serviceProvider">if(mvcount('form.serviceProvider')=0,"*",if(mvcount('form.serviceProvider')!=1,mvfilter('form.serviceProvider'!="*"),'form.serviceProvider'))</eval>-->
       <!--</change>-->
       <search base="base_search">
-        <query> search $tenant$ AND $usr$ |stats count by serviceProvider</query>
+        <query> search $tenant$ AND $usr$ AND $role$|stats count by serviceProvider</query>
       </search>
       <initialValue>*</initialValue>
       <valuePrefix>serviceProvider="</valuePrefix>
@@ -42,10 +42,24 @@
       <fieldForLabel>tenant</fieldForLabel>
       <fieldForValue>tenant</fieldForValue>
       <search base="base_search">
-        <query> | search $serviceProvider$ AND $usr$ |stats count by tenant</query>
+        <query> | search $serviceProvider$ AND $usr$ AND $role$ |stats count by tenant</query>
       </search>
       <initialValue>*</initialValue>
       <valuePrefix>tenant="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+    </input>
+    <input id="multi4" type="multiselect" token="role">
+      <label>Role</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>role</fieldForLabel>
+      <fieldForValue>role</fieldForValue>
+      <search base="base_search">
+        <query> | search $tenant$ AND $serviceProvider$ AND $usr$ |stats count by role</query>
+      </search>
+      <initialValue>*</initialValue>
+      <valuePrefix>role="</valuePrefix>
       <valueSuffix>"</valueSuffix>
       <delimiter> OR </delimiter>
     </input>
@@ -56,7 +70,7 @@
       <fieldForLabel>usr</fieldForLabel>
       <fieldForValue>usr</fieldForValue>
       <search base="base_search">
-        <query> | search $tenant$ AND $serviceProvider$|stats count by usr</query>
+        <query> | search $tenant$ AND $serviceProvider$ AND $role$|stats count by usr</query>
       </search>
       <initialValue>*</initialValue>
       <valuePrefix>usr="</valuePrefix>
@@ -69,7 +83,7 @@
       <title>OverAll</title>
       <single>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND $usr$ | where NOT (type =="step" and step =="true")  |stats count</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ AND $role$ | where NOT (type =="step" and step =="true")  |stats count</query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
@@ -83,7 +97,7 @@
     <panel>
       <single>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND $usr$ | where NOT (type =="step" and step =="true")  |stats distinct_count(usr)</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ AND $role$ | where NOT (type =="step" and step =="true")  |stats distinct_count(usr)</query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x0E31EB","0x6db7c6","0xf7bc38","0xf58f39","0xd93f3c"]</option>
@@ -97,7 +111,7 @@
     <panel>
       <single>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND $usr$|where (step =="false" AND logged=="false") |stats count</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ AND $role$|where (step =="false" AND logged=="false") |stats count</query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
@@ -113,7 +127,7 @@
     <panel>
       <map>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND $usr$|  iplocation IpAddress | geostats count by Country</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ AND $role$ |  iplocation IpAddress | geostats count by Country</query>
         </search>
         <option name="drilldown">none</option>
         <option name="mapping.type">marker</option>
@@ -123,7 +137,7 @@
       <viz type="semicircle_donut.semicircle_donut">
         <title>User percentage by logging success</title>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND $usr$  | where NOT (type =="step" and step =="true") |replace "true" WITH "success", "false" WITH "failed" IN logged|stats count(usr) as attempts by logged</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ AND $role$ | where NOT (type =="step" and step =="true") |replace "true" WITH "success", "false" WITH "failed" IN logged|stats count(usr) as attempts by logged</query>
         </search>
         <option name="drilldown">all</option>
         <option name="refresh.display">progressbar</option>
@@ -141,7 +155,7 @@
       <chart>
         <title>Attempt based on Tenant</title>
         <search base="base_search">
-          <query>search $tenant$ AND $serviceProvider$ AND $usr$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=1day count(usr) by tenant | fields - NULL</query>
+          <query>search $tenant$ AND $serviceProvider$ AND $usr$ AND $role$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=1day count(usr) by tenant | fields - NULL</query>
         </search>
         <option name="charting.axisTitleX.text">Time</option>
         <option name="charting.axisTitleY.text">Attempts</option>
@@ -154,7 +168,7 @@
       <chart>
         <title>Attempt based on ServiceProvider</title>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND $usr$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=1day count(usr) by serviceProvider | fields - NULL</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ AND $role$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=1day count(usr) by serviceProvider | fields - NULL</query>
         </search>
         <option name="charting.axisTitleX.text">Time</option>
         <option name="charting.axisTitleY.text">Attempt</option>
@@ -170,7 +184,7 @@
       <chart>
         <title>Top 5 service Providers based on attempts</title>
         <search base="base_search">
-          <query> search $tenant$ AND $serviceProvider$ AND $usr$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|stats count(usr) as amount by serviceProvider | fields - NULL | sort -amount | head 5</query>
+          <query> search $tenant$ AND $serviceProvider$ AND $usr$ AND $role$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|stats count(usr) as amount by serviceProvider | fields - NULL | sort -amount | head 5</query>
         </search>
         <option name="charting.axisTitleY.text">Attempt</option>
         <option name="charting.chart">column</option>
@@ -191,7 +205,7 @@
       </input>
       <chart>
         <search base="base_search">
-          <query>search $serviceProvider$ AND $usr$ AND $tenant$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=$overtime$ count(usr) by logged | rename _time as Time | eval Time=strftime(Time, "%d-%b-%Y") | fields - NULL</query>
+          <query>search $serviceProvider$ AND $usr$ AND $tenant$ AND $role$| where NOT (type =="step" and step =="true") |replace "true" WITH "Success", "false" WITH "Failed" IN logged|timechart span=$overtime$ count(usr) by logged | rename _time as Time | eval Time=strftime(Time, "%d-%b-%Y") | fields - NULL</query>
         </search>
         <option name="charting.axisTitleX.visibility">visible</option>
         <option name="charting.axisTitleY.visibility">visible</option>
@@ -208,7 +222,7 @@
       <table>
         <title>Details</title>
         <search base="base_search">
-          <query> search $serviceProvider$ AND $usr$ AND $tenant$ | eval loginTime=strftime( timestamp/1000,"%I:%M %p %d %b %Y") | where NOT (type =="step" and step =="true") |rename step as Attempt usr as UserName serviceProvider as ServiceProvider userstore as Userstore loginTime as Time|table Time Attempt UserName  IpAddress ServiceProvider Userstore </query>
+          <query> search $serviceProvider$ AND $usr$ AND $tenant$ AND $role$ | eval loginTime=strftime( timestamp/1000,"%I:%M %p %d %b %Y") | where NOT (type =="step" and step =="true") |rename step as Attempt usr as UserName serviceProvider as ServiceProvider userstore as Userstore loginTime as Time|table Time Attempt UserName  IpAddress ServiceProvider Userstore </query>
         </search>
         <option name="count">10</option>
         <option name="dataOverlayMode">none</option>
